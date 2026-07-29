@@ -131,13 +131,13 @@ def show_auth_page():
                         
         with admin_tabs[1]:
             st.subheader("Register Administrator Account")
-            st.caption("Requires system Admin Secret Passcode (default: admin123).")
+            st.caption("Requires system Admin Secret Passcode.")
             with st.form("admin_register_form"):
                 new_user = st.text_input("Admin Username", key="a_reg_user")
                 new_email = st.text_input("Admin Email", key="a_reg_email")
                 new_pass = st.text_input("Password", type="password", help="Minimum 6 characters", key="a_reg_pass")
                 new_pass_confirm = st.text_input("Confirm Password", type="password", key="a_reg_confirm")
-                passcode = st.text_input("Admin Passcode", type="password", help="Default: admin123", key="a_reg_passcode")
+                passcode = st.text_input("Admin Passcode", type="password", help="Enter Admin Passcode", key="a_reg_passcode")
                 submitted = st.form_submit_button("Register Admin Account")
                 
                 if submitted:
