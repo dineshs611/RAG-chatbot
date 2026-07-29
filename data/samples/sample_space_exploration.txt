@@ -1,0 +1,27 @@
+# Study Guide: Apollo Space Program
+
+## Overview
+The Apollo program, also known as Project Apollo, was the third United States human spaceflight program carried out by NASA. The program succeeded in landing the first humans on the Moon in 1969.
+
+## Key Apollo Missions
+
+### Apollo 11
+- **Launch Date:** July 16, 1969
+- **Landing Date:** July 20, 1969
+- **Crew:** Neil Armstrong, Buzz Aldrin, Michael Collins
+- **Significance:** First crewed landing on the Moon. Neil Armstrong became the first person to walk on the lunar surface, declaring: "That's one small step for [a] man, one giant leap for mankind." The lunar module was named Eagle, and the command module was named Columbia.
+
+### Apollo 13
+- **Launch Date:** April 11, 1970
+- **Crew:** James A. Lovell, John L. Swigert, Fred W. Haise
+- **Significance:** Known as a "successful failure." An oxygen tank exploded two days after launch, crippling the Service Module. The crew was forced to orbit the Moon and return home safely using the Lunar Module Aquarius as a lifeboat.
+
+### Apollo 17
+- **Launch Date:** December 7, 1972
+- **Crew:** Eugene Cernan, Harrison Schmitt, Ronald Evans
+- **Significance:** The final mission of the Apollo program. Eugene Cernan remains the last human to walk on the Moon. Harrison Schmitt was the first and only professional geologist to visit the Moon.
+
+## Science & Technologies
+- **Saturn V Rocket:** A three-stage liquid-fueled super heavy-lift launch vehicle developed under the direction of Wernher von Braun. It remains the tallest, heaviest, and most powerful rocket ever brought to operational status.
+- **Lunar Module (LM):** The two-stage spacecraft designed to carry two crew members from lunar orbit to the Moon's surface and back.
+- **Command/Service Module (CSM):** The mother-ship designed to stay in lunar orbit carrying the third astronaut, containing life-support, propulsion, and navigation systems.
