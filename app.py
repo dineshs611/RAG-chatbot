@@ -959,20 +959,10 @@ def show_admin_panel():
     st.title("🛡️ Admin Systems Dashboard")
     st.write("Review registration metrics, examine storage size allocations, and view live logs.")
     
-    # Role gate checks
+    # Role gate checks: Strictly allow only admin accounts
     if st.session_state.user_role != "admin":
-        st.error("Access Denied. You do not possess administrator credentials.")
-        passcode = st.text_input("Enter Admin Passcode to escalate role", type="password")
-        if st.button("Submit Passcode"):
-            from config.settings import ADMIN_PASSCODE
-            if passcode == ADMIN_PASSCODE:
-                st.session_state.user_role = "admin"
-                db.log_event("INFO", "admin", f"User {st.session_state.username} escalated role to Admin.")
-                st.success("Role upgraded. Accessing Admin Console...")
-                time.sleep(1)
-                st.rerun()
-            else:
-                st.error("Incorrect Passcode.")
+        st.error("🚫 Access Denied: Administrator privileges required.")
+        st.info("You are currently logged in with a Student account. Only users signed in through the Admin Portal can view system analytics and logs.")
         return
         
     metrics = db.get_admin_metrics()
@@ -1111,7 +1101,10 @@ def show_main_interface():
     elif page == "Settings":
         show_settings()
     elif page == "Admin Panel":
-        show_admin_panel()
+        if st.session_state.user_role == "admin":
+            show_admin_panel()
+        else:
+            st.error("🚫 Access Denied: Administrator privileges required.")
     else:
         st.error("Page Routing Error.")
 
