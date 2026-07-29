@@ -68,45 +68,84 @@ def get_readable_size(size_bytes):
 
 # --- PAGE: AUTHENTICATION ---
 def show_auth_page():
-    st.markdown('<div class="logo-container"><span class="logo-icon">🎓</span><span class="logo-text">EduRAG AI Assistant</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="logo-container"><span class="logo-icon">🎓</span><span class="logo-text">EduRAG AI Assistant Portal</span></div>', unsafe_allow_html=True)
     
-    tabs = st.tabs(["Sign In", "Sign Up", "Forgot Password"])
+    tabs = st.tabs(["👨‍🎓 Student Portal", "🛡️ Admin Portal", "🔑 Forgot Password"])
     
-    # Tab 1: Sign In
+    # Tab 1: Student Portal
     with tabs[0]:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.subheader("Login to your account")
-        with st.form("login_form"):
-            username = st.text_input("Username or Email")
-            password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Sign In")
-            
-            if submitted:
-                success, msg = auth.login_user(username, password)
-                if success:
-                    st.success(msg)
-                    st.rerun()
-                else:
-                    st.error(msg)
+        student_tabs = st.tabs(["Student Sign In", "Student Sign Up"])
+        
+        with student_tabs[0]:
+            st.subheader("👨‍🎓 Student Login")
+            with st.form("student_login_form"):
+                username = st.text_input("Username or Email", key="student_user")
+                password = st.text_input("Password", type="password", key="student_pass")
+                submitted = st.form_submit_button("Sign In as Student")
+                
+                if submitted:
+                    success, msg = auth.login_user(username, password)
+                    if success:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+                        
+        with student_tabs[1]:
+            st.subheader("Create a Student Account")
+            with st.form("student_register_form"):
+                new_user = st.text_input("Username", key="s_reg_user")
+                new_email = st.text_input("Email", key="s_reg_email")
+                new_pass = st.text_input("Password", type="password", help="Minimum 6 characters", key="s_reg_pass")
+                new_pass_confirm = st.text_input("Confirm Password", type="password", key="s_reg_confirm")
+                submitted = st.form_submit_button("Register Student")
+                
+                if submitted:
+                    success, msg = auth.register_user(new_user, new_email, new_pass, new_pass_confirm, role='student')
+                    if success:
+                        st.success(msg)
+                    else:
+                        st.error(msg)
         st.markdown('</div>', unsafe_allow_html=True)
         
-    # Tab 2: Sign Up
+    # Tab 2: Admin Portal
     with tabs[1]:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.subheader("Create a student profile")
-        with st.form("register_form"):
-            new_user = st.text_input("Username")
-            new_email = st.text_input("Email")
-            new_pass = st.text_input("Password", type="password", help="Minimum 6 characters")
-            new_pass_confirm = st.text_input("Confirm Password", type="password")
-            submitted = st.form_submit_button("Register")
-            
-            if submitted:
-                success, msg = auth.register_user(new_user, new_email, new_pass, new_pass_confirm)
-                if success:
-                    st.success(msg)
-                else:
-                    st.error(msg)
+        admin_tabs = st.tabs(["Admin Sign In", "Register New Admin"])
+        
+        with admin_tabs[0]:
+            st.subheader("🛡️ Admin Login")
+            with st.form("admin_login_form"):
+                username = st.text_input("Admin Username or Email", key="admin_user")
+                password = st.text_input("Admin Password", type="password", key="admin_pass")
+                submitted = st.form_submit_button("Sign In as Administrator")
+                
+                if submitted:
+                    success, msg = auth.login_user(username, password, required_role='admin')
+                    if success:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+                        
+        with admin_tabs[1]:
+            st.subheader("Register Administrator Account")
+            st.caption("Requires system Admin Secret Passcode (default: admin123).")
+            with st.form("admin_register_form"):
+                new_user = st.text_input("Admin Username", key="a_reg_user")
+                new_email = st.text_input("Admin Email", key="a_reg_email")
+                new_pass = st.text_input("Password", type="password", help="Minimum 6 characters", key="a_reg_pass")
+                new_pass_confirm = st.text_input("Confirm Password", type="password", key="a_reg_confirm")
+                passcode = st.text_input("Admin Passcode", type="password", help="Default: admin123", key="a_reg_passcode")
+                submitted = st.form_submit_button("Register Admin Account")
+                
+                if submitted:
+                    success, msg = auth.register_user(new_user, new_email, new_pass, new_pass_confirm, role='admin', admin_passcode=passcode)
+                    if success:
+                        st.success(msg)
+                    else:
+                        st.error(msg)
         st.markdown('</div>', unsafe_allow_html=True)
         
     # Tab 3: Forgot Password
@@ -125,6 +164,7 @@ def show_auth_page():
                 else:
                     st.error(msg)
         st.markdown('</div>', unsafe_allow_html=True)
+
 
 # --- PAGE: DASHBOARD ---
 def show_dashboard():

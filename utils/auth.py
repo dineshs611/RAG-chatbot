@@ -20,8 +20,10 @@ def validate_email(email: str) -> bool:
     pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
     return bool(re.match(pattern, email))
 
-def register_user(username, email, password, confirm_password):
-    """Handle new user registration details validation and database entry."""
+from config.settings import ADMIN_PASSCODE
+
+def register_user(username, email, password, confirm_password, role='student', admin_passcode=None):
+    """Handle user registration for students and admins."""
     username = username.strip()
     email = email.strip()
     
@@ -40,6 +42,10 @@ def register_user(username, email, password, confirm_password):
     if password != confirm_password:
         return False, "Passwords do not match."
         
+    if role == 'admin':
+        if not admin_passcode or admin_passcode != ADMIN_PASSCODE:
+            return False, "Invalid Admin Passcode."
+            
     # Check if username or email already exists
     if db.get_user_by_username(username):
         return False, "Username is already taken."
@@ -49,23 +55,24 @@ def register_user(username, email, password, confirm_password):
         
     # Create user
     pw_hash = hash_password(password)
-    # The first user registered in the system is automatically made an admin for administration purposes
+    
     conn = db.get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM users")
     count = cursor.fetchone()[0]
     conn.close()
     
-    role = "admin" if count == 0 else "student"
+    # If system is empty, default first account to admin, otherwise use selected role
+    final_role = "admin" if count == 0 else role
     
-    user_id = db.create_user(username, email, pw_hash, role)
+    user_id = db.create_user(username, email, pw_hash, final_role)
     if user_id:
-        return True, "Registration successful! You can now log in."
+        return True, f"Registration successful as {final_role.capitalize()}! You can now log in."
     else:
         return False, "An error occurred during registration. Please try again."
 
-def login_user(username, password):
-    """Verify login credentials and set Streamlit session state."""
+def login_user(username, password, required_role=None):
+    """Verify login credentials and set Streamlit session state with optional role requirement."""
     username = username.strip()
     if not username or not password:
         return False, "Username and password are required."
@@ -79,6 +86,10 @@ def login_user(username, password):
         return False, "Invalid username/email or password."
         
     if check_password(password, user["password_hash"]):
+        # Check required role if specified
+        if required_role == 'admin' and user["role"] != 'admin':
+            return False, "Access Denied: This account does not have Administrator privileges. Please use Student Login."
+            
         # Establish session details
         st.session_state.authenticated = True
         st.session_state.user_id = user["id"]
@@ -88,10 +99,11 @@ def login_user(username, password):
         if "current_page" not in st.session_state or st.session_state.current_page == "Auth":
             st.session_state.current_page = "Dashboard"
         
-        db.log_event("INFO", "auth", f"User {user['username']} logged in successfully.")
-        return True, "Login successful!"
+        db.log_event("INFO", "auth", f"User {user['username']} logged in successfully as {user['role']}.")
+        return True, f"Welcome {user['username']}! ({user['role'].capitalize()})"
         
     return False, "Invalid username/email or password."
+
 
 def logout():
     """Clear credentials and terminate session state."""
