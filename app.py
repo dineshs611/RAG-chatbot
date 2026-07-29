@@ -1072,9 +1072,12 @@ def show_main_interface():
             ("Summarizer", "📝"),
             ("Quiz Generator", "🎯"),
             ("Flashcards", "🎴"),
-            ("Settings", "⚙️"),
-            ("Admin Panel", "🛡️")
+            ("Settings", "⚙️")
         ]
+        
+        # Only display Admin Panel link for Administrator accounts
+        if st.session_state.user_role == "admin":
+            pages.append(("Admin Panel", "🛡️"))
         
         for name, icon in pages:
             label = f"{icon} {lang_pack.get(name.lower().replace(' ', '_'), name)}"
