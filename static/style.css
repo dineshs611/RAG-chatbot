@@ -27,10 +27,19 @@ html, body, [data-testid="stAppViewContainer"] {
     border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Header & Streamlit Toolbar Customization (Hides Deploy button) */
-header[data-testid="stHeader"], [data-testid="stToolbar"], #MainMenu, footer {
+/* Hide Deploy button and decorations while keeping sidebar toggle button functional */
+[data-testid="stAppDeployButton"],
+[data-testid="stDecoration"],
+[data-testid="stToolbarActions"],
+#MainMenu,
+footer {
     display: none !important;
     visibility: hidden !important;
+}
+
+header[data-testid="stHeader"] {
+    background-color: transparent !important;
+    z-index: 999999 !important;
 }
 
 /* Card Container - Glassmorphism style */
