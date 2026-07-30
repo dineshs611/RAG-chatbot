@@ -12,11 +12,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Imports
 import importlib
 import utils.db_manager as db
 import utils.auth as auth
 import utils.exporters as exporters
+import utils.emailer as emailer
 import parsers.manager as pm
 import database.vector_store as vs
 import rag.pipeline as rag
@@ -28,6 +28,7 @@ from config.settings import LANGUAGES, SUGGESTED_QUESTIONS
 # Ensure modules reload fresh on Streamlit script execution
 importlib.reload(db)
 importlib.reload(auth)
+importlib.reload(emailer)
 
 # Initialize session state variables
 auth.init_session()
@@ -1180,6 +1181,16 @@ def show_admin_password_management():
                     new_hash = auth.hash_password(new_pass)
                     if db.admin_reset_user_password(selected_student["id"], new_hash):
                         st.success(f"Successfully updated password for student '{selected_student['username']}'.")
+                        with st.spinner(f"Sending email notification to {selected_student['email']}..."):
+                            email_ok, email_msg = emailer.send_password_reset_email(
+                                to_email=selected_student['email'],
+                                username=selected_student['username'],
+                                temp_password=new_pass
+                            )
+                        if email_ok:
+                            st.info(email_msg)
+                        else:
+                            st.warning(email_msg)
                     else:
                         st.error("Failed to update password.")
                         
@@ -1189,7 +1200,17 @@ def show_admin_password_management():
             temp_pass = f"Temp{selected_student['username']}1!"
             new_hash = auth.hash_password(temp_pass)
             if db.admin_reset_user_password(selected_student["id"], new_hash):
-                st.info(f"Temporary password set for **{selected_student['username']}**: `{temp_pass}`")
+                st.success(f"Temporary password generated & updated for **{selected_student['username']}**: `{temp_pass}`")
+                with st.spinner(f"Sending email notification to {selected_student['email']}..."):
+                    email_ok, email_msg = emailer.send_password_reset_email(
+                        to_email=selected_student['email'],
+                        username=selected_student['username'],
+                        temp_password=temp_pass
+                    )
+                if email_ok:
+                    st.info(email_msg)
+                else:
+                    st.warning(email_msg)
             else:
                 st.error("Failed to set temporary password.")
                 
