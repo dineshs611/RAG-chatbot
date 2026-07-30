@@ -1045,6 +1045,151 @@ def show_admin_panel():
         log_text += f"[{l['timestamp'][:19]}] {l['level']} ({l['module']}): {l['message']}\n"
     st.text_area("System Events", log_text, height=200)
 
+# --- PAGE: ADMIN STUDENT ACTIVITY TRACKER ---
+def show_student_activity_tracker():
+    st.title("👥 Student Activity & Questions Log")
+    st.write("Track student login timestamps, view questions asked by students, and examine complete activity histories.")
+    
+    if st.session_state.user_role != "admin":
+        st.error("🚫 Access Denied: Administrator privileges required.")
+        return
+
+    tabs = st.tabs(["💬 All Student Questions", "📊 Student Activity Timelines & Timings"])
+
+    # Tab 1: All Student Questions
+    with tabs[0]:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader("Questions Asked by Students")
+        all_q = db.get_all_questions_with_users()
+        
+        if all_q:
+            search_filter = st.text_input("Filter questions by student name or keyword", key="q_filter_input")
+            
+            filtered = all_q
+            if search_filter:
+                f_lower = search_filter.lower()
+                filtered = [q for q in all_q if f_lower in q["username"].lower() or f_lower in q["question"].lower() or f_lower in q["email"].lower()]
+                
+            st.write(f"Displaying {len(filtered)} questions:")
+            
+            for q in filtered:
+                st.markdown(f"👤 **Student:** `{q['username']}` ({q['email']}) | 🕒 **Timestamp:** `{q['timestamp'][:19]}`")
+                st.markdown(f"💬 **Question:** {q['question']}")
+                if q['ai_response']:
+                    with st.expander("🤖 View AI Grounded Answer"):
+                        st.write(q['ai_response'])
+                st.caption(f"Session Title: {q['conversation_title']}")
+                st.divider()
+        else:
+            st.info("No questions asked by students yet.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Tab 2: Individual Student Timelines & Timings
+    with tabs[1]:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        students = db.get_all_students()
+        if not students:
+            st.info("No student accounts registered yet.")
+        else:
+            student_dict = {f"{s['username']} ({s['email']})": s["id"] for s in students}
+            selected_student_label = st.selectbox("Select Student Account", list(student_dict.keys()))
+            selected_user_id = student_dict[selected_student_label]
+            
+            act = db.get_student_full_activity(selected_user_id)
+            if act and act.get("user"):
+                user_info = act["user"]
+                st.subheader(f"Activity Profile: {user_info['username']}")
+                st.write(f"📧 **Email:** {user_info['email']} | 📅 **Account Registered:** {user_info['created_at'][:19]}")
+                
+                sub_tabs = st.tabs(["💬 Questions Asked", "📄 Documents Uploaded", "🎯 Quiz History", "🔐 Timestamps & Logs"])
+                
+                with sub_tabs[0]:
+                    if act["questions"]:
+                        for q in act["questions"]:
+                            st.write(f"🕒 **[{q['timestamp'][:19]}]** {q['question']}")
+                            if q['ai_response']:
+                                st.caption(f"AI Answer: {q['ai_response'][:150]}...")
+                            st.divider()
+                    else:
+                        st.caption("No questions asked by this student.")
+                        
+                with sub_tabs[1]:
+                    if act["documents"]:
+                        for d in act["documents"]:
+                            st.write(f"📄 **{d['filename']}** ({d['file_type']}) - {get_readable_size(d['file_size'])}")
+                            st.caption(f"Uploaded: {d['upload_date'][:19]} | Chunks: {d['num_chunks']} | Pages: {d['num_pages']}")
+                            st.divider()
+                    else:
+                        st.caption("No documents uploaded.")
+                        
+                with sub_tabs[2]:
+                    if act["quizzes"]:
+                        for q in act["quizzes"]:
+                            score_pct = int(q['score']/q['total']*100) if q['total']>0 else 0
+                            st.write(f"🎯 **Document:** {q['doc_name']} | **Score:** {q['score']}/{q['total']} ({score_pct}%) | Difficulty: {q['difficulty']}")
+                            st.caption(f"Date: {q['quiz_date'][:19]}")
+                            st.divider()
+                    else:
+                        st.caption("No quiz attempts recorded.")
+                        
+                with sub_tabs[3]:
+                    if act["logs"]:
+                        for l in act["logs"]:
+                            st.write(f"🕒 **[{l['timestamp'][:19]}]** {l['message']}")
+                    else:
+                        st.caption("No event logs for this student.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# --- PAGE: ADMIN STUDENT PASSWORD MANAGEMENT ---
+def show_admin_password_management():
+    st.title("🔐 Student Password Management")
+    st.write("Administrators can securely update or reset passwords for any registered student account.")
+    
+    if st.session_state.user_role != "admin":
+        st.error("🚫 Access Denied: Administrator privileges required.")
+        return
+
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    students = db.get_all_students()
+    
+    if not students:
+        st.info("No student accounts available to manage.")
+    else:
+        student_dict = {f"{s['username']} ({s['email']})": s for s in students}
+        sel_label = st.selectbox("Select Student Account to Reset", list(student_dict.keys()))
+        selected_student = student_dict[sel_label]
+        
+        st.write(f"Managing account: **{selected_student['username']}** (`{selected_student['email']}`)")
+        
+        with st.form("admin_password_reset_form"):
+            new_pass = st.text_input("New Password", type="password", help="Minimum 6 characters")
+            confirm_pass = st.text_input("Confirm New Password", type="password")
+            submitted = st.form_submit_button("Update Student Password")
+            
+            if submitted:
+                if not new_pass or len(new_pass) < 6:
+                    st.error("Password must be at least 6 characters long.")
+                elif new_pass != confirm_pass:
+                    st.error("Passwords do not match.")
+                else:
+                    new_hash = auth.hash_password(new_pass)
+                    if db.admin_reset_user_password(selected_student["id"], new_hash):
+                        st.success(f"Successfully updated password for student '{selected_student['username']}'.")
+                    else:
+                        st.error("Failed to update password.")
+                        
+        st.divider()
+        st.subheader("Quick Temporary Password Generator")
+        if st.button("Generate & Set Temporary Password"):
+            temp_pass = f"Temp{selected_student['username']}1!"
+            new_hash = auth.hash_password(temp_pass)
+            if db.admin_reset_user_password(selected_student["id"], new_hash):
+                st.info(f"Temporary password set for **{selected_student['username']}**: `{temp_pass}`")
+            else:
+                st.error("Failed to set temporary password.")
+                
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # --- APPLICATION HEADER & SIDEBAR NAVIGATION ---
 def show_main_interface():
     # Sidebar rendering
@@ -1053,25 +1198,28 @@ def show_main_interface():
         st.write(f"Logged in as: **{st.session_state.username}** (`{st.session_state.user_role}`)")
         st.write("---")
         
-        # Navigation Options
-        pages = [
-            ("Dashboard", "🏠"),
-            ("AI Study Partner", "💬"),
-            ("Upload Materials", "📤"),
-            ("Advanced Search", "🔍"),
-            ("Summarizer", "📝"),
-            ("Quiz Generator", "🎯"),
-            ("Flashcards", "🎴"),
-            ("Settings", "⚙️")
-        ]
-        
-        # Only display Admin Panel link for Administrator accounts
+        # Navigation Options: Dedicated lists for Admin vs Student
         if st.session_state.user_role == "admin":
-            pages.append(("Admin Panel", "🛡️"))
+            pages = [
+                ("Admin Dashboard", "🏠"),
+                ("Student Activity Tracker", "👥"),
+                ("Student Password Reset", "🔐"),
+                ("Settings", "⚙️")
+            ]
+        else:
+            pages = [
+                ("Dashboard", "🏠"),
+                ("AI Study Partner", "💬"),
+                ("Upload Materials", "📤"),
+                ("Advanced Search", "🔍"),
+                ("Summarizer", "📝"),
+                ("Quiz Generator", "🎯"),
+                ("Flashcards", "🎴"),
+                ("Settings", "⚙️")
+            ]
         
         for name, icon in pages:
             label = f"{icon} {lang_pack.get(name.lower().replace(' ', '_'), name)}"
-            # Select button
             if st.button(label, key=f"nav_{name}", use_container_width=True):
                 st.session_state.current_page = name
                 st.rerun()
@@ -1084,8 +1232,15 @@ def show_main_interface():
     # Page Router
     page = st.session_state.current_page
     
-    if page == "Dashboard":
-        show_dashboard()
+    if page in ["Dashboard", "Admin Dashboard"]:
+        if st.session_state.user_role == "admin":
+            show_admin_panel()
+        else:
+            show_dashboard()
+    elif page == "Student Activity Tracker":
+        show_student_activity_tracker()
+    elif page == "Student Password Reset":
+        show_admin_password_management()
     elif page == "AI Study Partner":
         show_chat_page()
     elif page == "Upload Materials":

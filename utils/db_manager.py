@@ -472,3 +472,90 @@ def get_system_logs(limit=100):
     logs = cursor.fetchall()
     conn.close()
     return logs
+
+# --- ADMIN EXTENDED MANAGEMENT & STUDENT ACTIVITY TRACKING ---
+
+def get_all_students():
+    """Fetch all student accounts."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, email, role, created_at FROM users WHERE role = 'student' ORDER BY created_at DESC")
+    students = cursor.fetchall()
+    conn.close()
+    return students
+
+def get_student_full_activity(user_id):
+    """Retrieve full activity history for a specific student."""
+    activity = {}
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # 1. Basic Info
+    cursor.execute("SELECT id, username, email, role, created_at FROM users WHERE id = ?", (user_id,))
+    activity["user"] = cursor.fetchone()
+    
+    if not activity["user"]:
+        conn.close()
+        return None
+        
+    username = activity["user"]["username"]
+    
+    # 2. Document Uploads
+    cursor.execute("SELECT * FROM documents WHERE uploaded_by = ? ORDER BY upload_date DESC", (user_id,))
+    activity["documents"] = cursor.fetchall()
+    
+    # 3. Questions Asked & AI Responses
+    cursor.execute("""
+        SELECT m.id, m.text as question, m.timestamp, c.title as conversation_title,
+               (SELECT text FROM messages m2 WHERE m2.conversation_id = m.conversation_id AND m2.id > m.id AND m2.sender = 'ai' ORDER BY m2.id ASC LIMIT 1) as ai_response
+        FROM messages m
+        JOIN conversations c ON m.conversation_id = c.id
+        WHERE c.user_id = ? AND m.sender = 'user'
+        ORDER BY m.timestamp DESC
+    """, (user_id,))
+    activity["questions"] = cursor.fetchall()
+    
+    # 4. Quizzes Taken
+    cursor.execute("SELECT * FROM quiz_results WHERE user_id = ? ORDER BY quiz_date DESC", (user_id,))
+    activity["quizzes"] = cursor.fetchall()
+    
+    # 5. Auth / Login Events for this user
+    cursor.execute("SELECT * FROM system_logs WHERE message LIKE ? ORDER BY timestamp DESC LIMIT 50", (f"%{username}%",))
+    activity["logs"] = cursor.fetchall()
+    
+    conn.close()
+    return activity
+
+def get_all_questions_with_users():
+    """Fetch all student questions asked in the system with timestamps."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT m.id, m.text as question, m.timestamp, u.username, u.email, u.role, c.title as conversation_title,
+               (SELECT text FROM messages m2 WHERE m2.conversation_id = m.conversation_id AND m2.id > m.id AND m2.sender = 'ai' ORDER BY m2.id ASC LIMIT 1) as ai_response
+        FROM messages m
+        JOIN conversations c ON m.conversation_id = c.id
+        JOIN users u ON c.user_id = u.id
+        WHERE m.sender = 'user'
+        ORDER BY m.timestamp DESC
+    """)
+    questions = cursor.fetchall()
+    conn.close()
+    return questions
+
+def admin_reset_user_password(target_user_id, new_password_hash):
+    """Admin function to reset any user's password."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_password_hash, target_user_id))
+        conn.commit()
+        success = cursor.rowcount > 0
+        conn.close()
+        if success:
+            log_event("INFO", "admin", f"Admin reset password for user ID {target_user_id}.")
+        return success
+    except Exception as e:
+        log_event("ERROR", "admin", f"Admin password reset error: {e}")
+        return False
+
