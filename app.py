@@ -1156,6 +1156,27 @@ def show_admin_password_management():
         return
 
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    with st.expander("⚙️ Configure Live Email Server Credentials (SMTP)", expanded=not bool(os.getenv("SMTP_USER"))):
+        st.write("To send real emails to students, configure your outgoing SMTP mail server credentials below (e.g. Gmail App Password).")
+        with st.form("smtp_config_form"):
+            smtp_srv = st.text_input("SMTP Host Server", value=os.getenv("SMTP_SERVER", "smtp.gmail.com"))
+            smtp_pt = st.text_input("SMTP Port", value=os.getenv("SMTP_PORT", "587"))
+            smtp_usr = st.text_input("Sender Email Address / Username", value=os.getenv("SMTP_USER", ""))
+            smtp_pwd = st.text_input("SMTP App Password", value=os.getenv("SMTP_PASSWORD", ""), type="password", help="For Gmail, generate a 16-character App Password under Google Account Security.")
+            save_smtp = st.form_submit_button("Save Email Credentials")
+            
+            if save_smtp:
+                os.environ["SMTP_SERVER"] = smtp_srv.strip()
+                os.environ["SMTP_PORT"] = smtp_pt.strip()
+                os.environ["SMTP_USER"] = smtp_usr.strip()
+                os.environ["SMTP_PASSWORD"] = smtp_pwd.strip()
+                os.environ["SENDER_EMAIL"] = smtp_usr.strip()
+                st.success("SMTP Email configuration updated successfully!")
+                time.sleep(0.5)
+                st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     students = db.get_all_students()
     
     if not students:
