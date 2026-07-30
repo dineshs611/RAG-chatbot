@@ -120,6 +120,7 @@ def logout():
 
 def init_session():
     """Verify session flags exist in Streamlit memory."""
+    import os
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
     if "user_id" not in st.session_state:
@@ -140,6 +141,21 @@ def init_session():
         st.session_state.language = "English"
     if "current_chat_id" not in st.session_state:
         st.session_state.current_chat_id = None
+
+    # Auto-detect default active LLM provider from environment keys
+    if "llm_provider" not in st.session_state:
+        if os.getenv("GEMINI_API_KEY", "").strip():
+            st.session_state.llm_provider = "gemini"
+            st.session_state.embeddings_provider = "gemini"
+        elif os.getenv("OPENAI_API_KEY", "").strip():
+            st.session_state.llm_provider = "openai"
+            st.session_state.embeddings_provider = "openai"
+        elif os.getenv("DEFAULT_LLM_PROVIDER", "").strip().lower() != "demo":
+            st.session_state.llm_provider = os.getenv("DEFAULT_LLM_PROVIDER").strip().lower()
+            st.session_state.embeddings_provider = os.getenv("DEFAULT_EMBEDDINGS_PROVIDER", "local").strip().lower()
+        else:
+            st.session_state.llm_provider = "demo"
+            st.session_state.embeddings_provider = "local"
 
 def simulate_password_recovery(username, email):
     """Simulate password recovery logic."""

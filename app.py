@@ -949,14 +949,26 @@ def show_settings():
     # API key setup in session state memory
     if new_provider == "openai":
         openai_key = st.text_input("OpenAI API Key", value=os.getenv("OPENAI_API_KEY", ""), type="password")
-        if st.button("Save OpenAI Key"):
-            os.environ["OPENAI_API_KEY"] = openai_key
-            st.success("OpenAI Key updated in memory.")
+        if st.button("Save OpenAI Key & Activate"):
+            os.environ["OPENAI_API_KEY"] = openai_key.strip()
+            os.environ["DEFAULT_LLM_PROVIDER"] = "openai"
+            os.environ["DEFAULT_EMBEDDINGS_PROVIDER"] = "openai"
+            st.session_state.llm_provider = "openai"
+            st.session_state.embeddings_provider = "openai"
+            st.success("OpenAI API Key saved and activated as primary model provider!")
+            time.sleep(0.5)
+            st.rerun()
     elif new_provider == "gemini":
         gemini_key = st.text_input("Gemini API Key", value=os.getenv("GEMINI_API_KEY", ""), type="password")
-        if st.button("Save Gemini Key"):
-            os.environ["GEMINI_API_KEY"] = gemini_key
-            st.success("Gemini Key updated in memory.")
+        if st.button("Save Gemini Key & Activate"):
+            os.environ["GEMINI_API_KEY"] = gemini_key.strip()
+            os.environ["DEFAULT_LLM_PROVIDER"] = "gemini"
+            os.environ["DEFAULT_EMBEDDINGS_PROVIDER"] = "gemini"
+            st.session_state.llm_provider = "gemini"
+            st.session_state.embeddings_provider = "gemini"
+            st.success("Gemini API Key saved and activated as primary model provider!")
+            time.sleep(0.5)
+            st.rerun()
             
     st.markdown('</div>', unsafe_allow_html=True)
 
