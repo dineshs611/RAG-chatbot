@@ -1160,10 +1160,15 @@ def show_admin_password_management():
         st.write("To send real emails to students, configure your outgoing SMTP mail server credentials below (e.g. Gmail App Password).")
         with st.form("smtp_config_form"):
             smtp_srv = st.text_input("SMTP Host Server", value=os.getenv("SMTP_SERVER", "smtp.gmail.com"))
-            smtp_pt = st.text_input("SMTP Port", value=os.getenv("SMTP_PORT", "587"))
+            smtp_pt = st.text_input("SMTP Port (587 for TLS, 465 for SSL)", value=os.getenv("SMTP_PORT", "587"))
             smtp_usr = st.text_input("Sender Email Address / Username", value=os.getenv("SMTP_USER", ""))
             smtp_pwd = st.text_input("SMTP App Password", value=os.getenv("SMTP_PASSWORD", ""), type="password", help="For Gmail, generate a 16-character App Password under Google Account Security.")
-            save_smtp = st.form_submit_button("Save Email Credentials")
+            
+            col_save, col_test = st.columns(2)
+            with col_save:
+                save_smtp = st.form_submit_button("Save Credentials")
+            with col_test:
+                test_smtp = st.form_submit_button("Test Connection")
             
             if save_smtp:
                 os.environ["SMTP_SERVER"] = smtp_srv.strip()
@@ -1174,6 +1179,20 @@ def show_admin_password_management():
                 st.success("SMTP Email configuration updated successfully!")
                 time.sleep(0.5)
                 st.rerun()
+
+            if test_smtp:
+                with st.spinner("Testing connection to email server..."):
+                    ok, test_msg = emailer.test_smtp_connection(
+                        server_host=smtp_srv.strip(),
+                        port=smtp_pt.strip(),
+                        username=smtp_usr.strip(),
+                        password=smtp_pwd.strip(),
+                        sender_email=smtp_usr.strip()
+                    )
+                if ok:
+                    st.success(test_msg)
+                else:
+                    st.error(test_msg)
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
