@@ -51,6 +51,7 @@ html, body, [data-testid="stAppViewContainer"] {{
 }}
 </style>
 """
+st.markdown(f'<div class="{theme_class}">', unsafe_allow_html=True)
 st.markdown(css_injected, unsafe_allow_html=True)
 
 # Fetch translation pack
@@ -73,7 +74,8 @@ def show_auth_page():
     
     # Tab 1: Student Portal
     with tabs[0]:
-                student_tabs = st.tabs(["Student Sign In", "Student Sign Up"])
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        student_tabs = st.tabs(["Student Sign In", "Student Sign Up"])
         
         with student_tabs[0]:
             st.subheader("👨‍🎓 Student Login")
@@ -105,10 +107,12 @@ def show_auth_page():
                         st.success(msg)
                     else:
                         st.error(msg)
-                
+        st.markdown('</div>', unsafe_allow_html=True)
+        
     # Tab 2: Admin Portal
     with tabs[1]:
-                admin_tabs = st.tabs(["Admin Sign In", "Register New Admin"])
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        admin_tabs = st.tabs(["Admin Sign In", "Register New Admin"])
         
         with admin_tabs[0]:
             st.subheader("🛡️ Admin Login")
@@ -142,10 +146,12 @@ def show_auth_page():
                         st.success(msg)
                     else:
                         st.error(msg)
-                
+        st.markdown('</div>', unsafe_allow_html=True)
+        
     # Tab 3: Forgot Password
     with tabs[2]:
-                st.subheader("Reset Password")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader("Reset Password")
         with st.form("forgot_password_form"):
             rec_user = st.text_input("Enter your username")
             rec_email = st.text_input("Enter your registered email")
@@ -157,7 +163,8 @@ def show_auth_page():
                     st.info(msg)
                 else:
                     st.error(msg)
-        
+        st.markdown('</div>', unsafe_allow_html=True)
+
 
 # --- PAGE: DASHBOARD ---
 def show_dashboard():
@@ -178,7 +185,8 @@ def show_dashboard():
     with col4:
         st.markdown(f'<div class="metric-card">🏆 Avg Quiz Score<div class="metric-val">{metrics["avg_quiz_score"]}%</div></div>', unsafe_allow_html=True)
         
-        st.subheader("Storage Limit Status")
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.subheader("Storage Limit Status")
     storage_limit = 100 * 1024 * 1024  # 100 MB limit
     usage = metrics["storage_used_bytes"]
     percentage = min((usage / storage_limit) * 100, 100.0)
@@ -188,7 +196,8 @@ def show_dashboard():
         st.progress(percentage / 100.0)
     with col_num:
         st.write(f"{get_readable_size(usage)} / 100 MB ({round(percentage, 1)}%)")
-        
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     col_act, col_chat = st.columns([1, 1])
     with col_act:
         st.markdown('<div class="glass-card" style="height:100%;">', unsafe_allow_html=True)
@@ -207,7 +216,8 @@ def show_dashboard():
         if st.button("🎴 Study Flashcards", use_container_width=True):
             st.session_state.current_page = "Flashcards"
             st.rerun()
-                
+        st.markdown('</div>', unsafe_allow_html=True)
+        
     with col_chat:
         st.markdown('<div class="glass-card" style="height:100%;">', unsafe_allow_html=True)
         st.subheader("Recent Chat Sessions")
@@ -230,7 +240,8 @@ def show_dashboard():
                     st.session_state.current_chat_id = cid
                     st.session_state.current_page = "AI Study Partner"
                     st.rerun()
-        
+        st.markdown('</div>', unsafe_allow_html=True)
+
 # --- PAGE: UPLOAD MATERIALS ---
 def show_upload_materials():
     st.title("📤 Study Materials Manager")
@@ -239,7 +250,8 @@ def show_upload_materials():
     col_up, col_list = st.columns([1, 1])
     
     with col_up:
-                st.subheader("Upload Document")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader("Upload Document")
         uploaded_file = st.file_uploader(
             "Choose a file", 
             type=["pdf", "docx", "txt", "csv", "xlsx", "xls"],
@@ -307,9 +319,11 @@ def show_upload_materials():
                         except Exception as e:
                             st.error(f"Processing error: {e}")
                             db.log_event("ERROR", "uploader", f"Failed to upload {filename}: {e}")
-                
+        st.markdown('</div>', unsafe_allow_html=True)
+        
     with col_list:
-                st.subheader("Your Study Materials")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader("Your Study Materials")
         docs = db.get_documents_by_user(st.session_state.user_id)
         
         if docs:
@@ -335,7 +349,8 @@ def show_upload_materials():
                 st.divider()
         else:
             st.write("You haven't uploaded any documents yet.")
-        
+        st.markdown('</div>', unsafe_allow_html=True)
+
 # --- PAGE: AI STUDY PARTNER ---
 def show_chat_page():
     st.title("🎓 AI Study Partner")
@@ -346,7 +361,8 @@ def show_chat_page():
     col_sidebar, col_chat = st.columns([1, 3])
     
     with col_sidebar:
-                st.subheader("Chats")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader("Chats")
         
         # New Chat button
         if st.button("+ New Study Session", use_container_width=True):
@@ -398,7 +414,8 @@ def show_chat_page():
                 st.rerun()
         else:
             st.write("No active study sessions. Click above to start a new chat!")
-                
+        st.markdown('</div>', unsafe_allow_html=True)
+        
     with col_chat:
         if st.session_state.current_chat_id:
             active_conv = None
@@ -425,7 +442,8 @@ def show_chat_page():
                 chat_messages = db.get_conversation_messages(st.session_state.current_chat_id)
                 
                 # Show Chat History
-                                for msg in chat_messages:
+                st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+                for msg in chat_messages:
                     if msg["sender"] == "user":
                         st.markdown(f'<div class="chat-bubble chat-user">👤 <b>You:</b><br/>{msg["text"]}</div>', unsafe_allow_html=True)
                     else:
@@ -439,7 +457,8 @@ def show_chat_page():
                                     st.markdown(f"**Document:** {cit['document']} | **Page:** {cit.get('page', 'N/A')} | **Match Confidence:** {int(cit.get('score', 0) * 100)}%")
                                     st.caption(f"\"{cit.get('text')}\"")
                                     st.divider()
-                                
+                st.markdown('</div>', unsafe_allow_html=True)
+                
                 # Suggestion Chips
                 st.write("Suggested questions:")
                 col_s1, col_s2, col_s3 = st.columns(3)
@@ -495,7 +514,8 @@ def show_advanced_search():
     
     docs = db.get_documents_by_user(st.session_state.user_id)
     
-        col_q, col_type = st.columns([3, 1])
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    col_q, col_type = st.columns([3, 1])
     with col_q:
         search_query = st.text_input("Enter search query")
     with col_type:
@@ -511,7 +531,8 @@ def show_advanced_search():
         sel_format = st.selectbox("Filter by format", type_options)
         
     submitted = st.button("Search database", use_container_width=True)
-        
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     if submitted and search_query:
         # Resolve filter queries
         doc_ids = None
@@ -566,10 +587,12 @@ def show_advanced_search():
         if results:
             for r in results:
                 meta = r["metadata"]
-                                st.write(f"📄 **{meta.get('filename')}** (Page {meta.get('page_number')})")
+                st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+                st.write(f"📄 **{meta.get('filename')}** (Page {meta.get('page_number')})")
                 st.caption(f"Similarity Confidence Match: {int(r['score'] * 100)}%")
                 st.markdown(f"```text\n{r['text'][:500]}...\n```")
-                        else:
+                st.markdown('</div>', unsafe_allow_html=True)
+        else:
             st.warning("No matching documents found.")
 
 # --- PAGE: SUMMARIZER ---
@@ -583,7 +606,8 @@ def show_summarizer():
         st.info("Please upload documents first.")
         return
         
-        doc_titles = [d["filename"] for d in docs]
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    doc_titles = [d["filename"] for d in docs]
     sel_doc = st.selectbox("Select document to summarize", doc_titles)
     
     active_doc = next(d for d in docs if d["filename"] == sel_doc)
@@ -605,9 +629,11 @@ def show_summarizer():
             )
             st.session_state.latest_summary = summary
             
-        
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     if "latest_summary" in st.session_state:
-                st.subheader(f"Summary: {active_doc['filename']}")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader(f"Summary: {active_doc['filename']}")
         st.write(st.session_state.latest_summary)
         
         # Download summary button
@@ -616,7 +642,8 @@ def show_summarizer():
             st.session_state.latest_summary, 
             file_name=f"Summary_{active_doc['filename']}.txt"
         )
-        
+        st.markdown('</div>', unsafe_allow_html=True)
+
 # --- PAGE: QUIZ GENERATOR ---
 def show_quiz_generator():
     st.title("🎯 AI Quiz Generator")
@@ -627,7 +654,8 @@ def show_quiz_generator():
         st.info("Upload documents first to generate a quiz.")
         return
         
-        doc_titles = [d["filename"] for d in docs]
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    doc_titles = [d["filename"] for d in docs]
     sel_doc = st.selectbox("Select source document", doc_titles)
     active_doc = next(d for d in docs if d["filename"] == sel_doc)
     
@@ -674,10 +702,12 @@ def show_quiz_generator():
                     st.session_state.quiz_submitted = False
                 else:
                     st.error("Failed to generate quiz content. Try another range.")
-        
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Render Quiz Form if active
     if "active_quiz" in st.session_state and st.session_state.active_quiz:
-                st.subheader(f"Quiz on {st.session_state.quiz_doc_name} ({st.session_state.quiz_difficulty})")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader(f"Quiz on {st.session_state.quiz_doc_name} ({st.session_state.quiz_difficulty})")
         
         quiz_data = st.session_state.active_quiz
         
@@ -770,7 +800,8 @@ def show_quiz_generator():
             if st.button("Close Quiz"):
                 st.session_state.active_quiz = None
                 st.rerun()
-        
+        st.markdown('</div>', unsafe_allow_html=True)
+
 # --- PAGE: FLASHCARDS ---
 def show_flashcards():
     st.title("🎴 Flashcards Generator")
@@ -781,7 +812,8 @@ def show_flashcards():
         st.info("Upload documents first to generate flashcards.")
         return
         
-        doc_titles = [d["filename"] for d in docs]
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    doc_titles = [d["filename"] for d in docs]
     sel_doc = st.selectbox("Select document", doc_titles)
     active_doc = next(d for d in docs if d["filename"] == sel_doc)
     
@@ -801,7 +833,8 @@ def show_flashcards():
                 st.session_state.card_flipped = False
             else:
                 st.error("Failed to generate flashcards.")
-        
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Display cards if available
     if "active_cards" in st.session_state and st.session_state.active_cards:
         cards = st.session_state.active_cards
@@ -812,11 +845,13 @@ def show_flashcards():
         card = cards[idx]
         
         # Render front or back based on state
-                if not st.session_state.card_flipped:
+        st.markdown('<div class="flashcard-container">', unsafe_allow_html=True)
+        if not st.session_state.card_flipped:
             st.markdown(f'<div class="flashcard-front"><h3>{card.get("front")}</h3><br/><small>Click Flip to see explanation</small></div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<div class="flashcard-back"><h4>Definition/Explanation:</h4><p>{card.get("back")}</p></div>', unsafe_allow_html=True)
-                
+        st.markdown('</div>', unsafe_allow_html=True)
+        
         col_flip, col_next, col_prev = st.columns(3)
         with col_flip:
             if st.button("Flip Card", use_container_width=True):
@@ -842,7 +877,8 @@ def show_settings():
     st.title("⚙️ Personalization & Model Settings")
     st.write("Tune themes, adjust display parameters, and set active AI parameters.")
     
-        st.subheader("Visual Preferences")
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.subheader("Visual Preferences")
     
     # 1. Light/Dark Mode
     theme_opt = st.selectbox("App Theme Mode", ["Dark Mode", "Light Mode"], index=0 if st.session_state.theme == "dark" else 1)
@@ -863,9 +899,11 @@ def show_settings():
     if lang_opt != st.session_state.language:
         st.session_state.language = lang_opt
         st.rerun()
-        
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # AI Engine Configuration
-        st.subheader("AI Model Configuration")
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.subheader("AI Model Configuration")
     
     active_provider = st.session_state.get("llm_provider", "demo")
     providers_list = ["Demo Mode (Offline Fallback)", "Ollama (Local Llama 3)", "OpenAI API", "Gemini API"]
@@ -913,7 +951,8 @@ def show_settings():
             time.sleep(0.5)
             st.rerun()
             
-    
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # --- PAGE: ADMIN PANEL ---
 def show_admin_panel():
     st.title("🛡️ Admin Systems Dashboard")
@@ -1018,7 +1057,8 @@ def show_student_activity_tracker():
 
     # Tab 1: All Student Questions
     with tabs[0]:
-                st.subheader("Questions Asked by Students")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader("Questions Asked by Students")
         all_q = db.get_all_questions_with_users()
         
         if all_q:
@@ -1041,10 +1081,12 @@ def show_student_activity_tracker():
                 st.divider()
         else:
             st.info("No questions asked by students yet.")
-        
+        st.markdown('</div>', unsafe_allow_html=True)
+
     # Tab 2: Individual Student Timelines & Timings
     with tabs[1]:
-                students = db.get_all_students()
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        students = db.get_all_students()
         if not students:
             st.info("No student accounts registered yet.")
         else:
@@ -1095,7 +1137,8 @@ def show_student_activity_tracker():
                             st.write(f"🕒 **[{l['timestamp'][:19]}]** {l['message']}")
                     else:
                         st.caption("No event logs for this student.")
-        
+        st.markdown('</div>', unsafe_allow_html=True)
+
 # --- PAGE: ADMIN STUDENT PASSWORD MANAGEMENT ---
 def show_admin_password_management():
     st.title("🔐 Student Password Management")
@@ -1105,7 +1148,8 @@ def show_admin_password_management():
         st.error("🚫 Access Denied: Administrator privileges required.")
         return
 
-        with st.expander("⚙️ Configure Live Email Server Credentials (SMTP)", expanded=not bool(os.getenv("SMTP_USER"))):
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    with st.expander("⚙️ Configure Live Email Server Credentials (SMTP)", expanded=not bool(os.getenv("SMTP_USER"))):
         st.write("To send real emails to students, configure your outgoing SMTP mail server credentials below (e.g. Gmail App Password).")
         with st.form("smtp_config_form"):
             smtp_srv = st.text_input("SMTP Host Server", value=os.getenv("SMTP_SERVER", "smtp.gmail.com"))
@@ -1142,8 +1186,10 @@ def show_admin_password_management():
                     st.success(test_msg)
                 else:
                     st.error(test_msg)
-    
-        students = db.get_all_students()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    students = db.get_all_students()
     
     if not students:
         st.info("No student accounts available to manage.")
@@ -1201,7 +1247,8 @@ def show_admin_password_management():
             else:
                 st.error("Failed to set temporary password.")
                 
-    
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # --- APPLICATION HEADER & SIDEBAR NAVIGATION ---
 def show_main_interface():
     # Sidebar rendering
@@ -1301,3 +1348,4 @@ else:
     show_auth_page()
 
 # Close main div wrapper
+st.markdown('</div>', unsafe_allow_html=True)
