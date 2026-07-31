@@ -42,22 +42,25 @@ header[data-testid="stHeader"] {
     z-index: 999999 !important;
 }
 
-/* Card Container - Glassmorphism style */
-.glass-card {
+/* Card Container & Form Glassmorphism system */
+.glass-card,
+[data-testid="stForm"],
+[data-testid="stExpander"] {
     background: rgba(255, 255, 255, 0.04) !important;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
-.glass-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 12px 40px 0 rgba(110, 68, 255, 0.15);
+.glass-card:hover,
+[data-testid="stForm"]:hover,
+[data-testid="stExpander"]:hover {
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 12px 40px 0 rgba(110, 68, 255, 0.15) !important;
 }
 
 .light-mode-app .glass-card {
