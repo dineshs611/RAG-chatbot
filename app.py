@@ -482,40 +482,27 @@ def show_chat_page():
                 query = question_input or selected_suggestion
                 
                 if query:
-                    # Write user prompt to database
+                    # 1. Store User Question in Database
                     db.add_message(st.session_state.current_chat_id, "user", query)
                     
-                    # Force redraw of user bubble immediately
-                    st.rerun()
+                    # 2. Fetch document filter if specified
+                    doc_filter_ids = None
+                    if 'focused_doc_name' in st.session_state and st.session_state.focused_doc_name != "All Uploaded Documents":
+                        focused_doc = next((d for d in docs if d["filename"] == st.session_state.focused_doc_name), None)
+                        if focused_doc:
+                            doc_filter_ids = [focused_doc["id"]]
+                            
+                    # 3. Execute RAG Pipeline and Store AI Response
+                    with st.spinner("Analyzing document context..."):
+                        llm_provider = st.session_state.get("llm_provider", "demo")
+                        answer, citations = rag.execute_rag_pipeline(
+                            question=query,
+                            user_id=st.session_state.user_id,
+                            doc_filter_ids=doc_filter_ids,
+                            provider=llm_provider
+                        )
+                        db.add_message(st.session_state.current_chat_id, "ai", answer, citations)
                     
-            # After st.rerun(), the script runs from top. To generate response for the last query:
-            # We fetch messages again and see if the last message is from 'user'. If so, generate AI response!
-            chat_messages_updated = db.get_conversation_messages(st.session_state.current_chat_id)
-            if chat_messages_updated and chat_messages_updated[-1]["sender"] == "user":
-                last_query = chat_messages_updated[-1]["text"]
-                
-                # Fetch focus scopes again (we recreate logic to be inline)
-                docs = db.get_documents_by_user(st.session_state.user_id)
-                doc_options = ["All Uploaded Documents"] + [d["filename"] for d in docs]
-                # We fetch chosen filter from selectbox or default
-                doc_filter_ids = None
-                if 'focused_doc_name' in st.session_state and st.session_state.focused_doc_name != "All Uploaded Documents":
-                    focused_doc = next((d for d in docs if d["filename"] == st.session_state.focused_doc_name), None)
-                    if focused_doc:
-                        doc_filter_ids = [focused_doc["id"]]
-                
-                with st.spinner("Analyzing document context..."):
-                    # Execute pipeline
-                    llm_provider = st.session_state.get("llm_provider", "demo")
-                    answer, citations = rag.execute_rag_pipeline(
-                        question=last_query,
-                        user_id=st.session_state.user_id,
-                        doc_filter_ids=doc_filter_ids,
-                        provider=llm_provider
-                    )
-                    
-                    # Store AI Response
-                    db.add_message(st.session_state.current_chat_id, "ai", answer, citations)
                     st.rerun()
         else:
             st.info("Start a new chat session to query your study materials.")
