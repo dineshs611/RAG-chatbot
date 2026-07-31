@@ -137,15 +137,16 @@ def search_similarity(query_text: str, user_id: int, doc_filter_ids: list = None
     if _use_chroma:
         try:
             # Build filters for Chroma DB
-            # Chroma supports dict-based where operators. For user scoping:
-            where_clause = {"uploaded_by": user_id}
-            
-            # Since Chroma doesn't support complex OR where filters easily in some versions,
-            # we query and filter in-memory if multiple filters are set, or use simple filters.
-            # Let's run a query for the user, then filter results in-memory to be highly reliable.
+            where_clause = None
+            if doc_filter_ids:
+                # If explicit documents are selected, search across them
+                pass
+            elif user_id:
+                where_clause = {"uploaded_by": user_id}
+                
             chroma_res = _collection.query(
                 query_embeddings=[query_vector],
-                n_results=top_k * 3,  # Retrieve more than top_k to account for filters
+                n_results=top_k * 3,
                 where=where_clause
             )
             
@@ -155,8 +156,6 @@ def search_similarity(query_text: str, user_id: int, doc_filter_ids: list = None
                 distances = chroma_res["distances"][0]
                 
                 for d, m, dist in zip(docs, metas, distances):
-                    # Chroma distances for cosine space is usually cosine distance (1 - similarity)
-                    # Convert to similarity score
                     sim_score = float(1.0 - dist)
                     
                     # Apply in-memory filters
@@ -184,15 +183,18 @@ def search_similarity(query_text: str, user_id: int, doc_filter_ids: list = None
     for r in db_records:
         meta = r["metadata"]
         # Filters:
-        if meta.get("uploaded_by") != user_id:
-            continue
-        if doc_filter_ids and meta.get("doc_id") not in doc_filter_ids:
-            continue
+        if doc_filter_ids:
+            if meta.get("doc_id") not in doc_filter_ids:
+                continue
+        elif user_id:
+            up_by = meta.get("uploaded_by")
+            if up_by != user_id and up_by != 1:
+                continue
+                
         if file_type_filter and meta.get("file_type") != file_type_filter:
             continue
             
         sim = cosine_similarity(query_vector, r["embedding"])
-        # Map cosine similarity to 0-1 scale safely
         score = float((sim + 1.0) / 2.0) if sim is not None else 0.0
         
         matched_records.append({

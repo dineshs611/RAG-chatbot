@@ -47,9 +47,12 @@ def synthesize_answer(question: str, retrieved_chunks: list) -> str:
     # Sort sentences by score descending
     all_sentences.sort(key=lambda x: x["score"], reverse=True)
     
-    # Filter out sentences that have zero keyword overlap
+    # Filter out sentences that have keyword overlap or fallback to top retrieved sentences
     relevant_sentences = [s for s in all_sentences if s["score"] > 0]
     
+    if not relevant_sentences:
+        relevant_sentences = all_sentences[:4]
+        
     if not relevant_sentences:
         return "I couldn't find this information in the uploaded documents."
         
