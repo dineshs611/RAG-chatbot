@@ -93,7 +93,7 @@ def show_auth_page():
                 if submitted:
                     success, msg = auth.login_user(username, password)
                     if success:
-                        st.success(msg)
+                        st.session_state.authenticated = True
                         st.rerun()
                     else:
                         st.error(msg)
@@ -130,7 +130,7 @@ def show_auth_page():
                 if submitted:
                     success, msg = auth.login_user(username, password, required_role='admin')
                     if success:
-                        st.success(msg)
+                        st.session_state.authenticated = True
                         st.rerun()
                     else:
                         st.error(msg)
@@ -993,15 +993,14 @@ def show_admin_panel():
         doc_counts = [u["doc_count"] for u in users]
         msg_counts = [u["msg_count"] for u in users]
         
-        fig, ax = plt.subplots(figsize=(8, 3))
-        ax.bar(usernames, doc_counts, label="Docs Uploaded", color="#3b82f6", alpha=0.8)
-        ax.bar(usernames, msg_counts, bottom=doc_counts, label="Questions Asked", color="#7c3aed", alpha=0.8)
-        ax.set_ylabel("Activity Count")
-        ax.set_title("User Engagement Chart")
-        ax.legend()
-        st.pyplot(fig)
+        import pandas as pd
+        chart_data = pd.DataFrame({
+            "Docs Uploaded": doc_counts,
+            "Questions Asked": msg_counts
+        }, index=usernames)
+        st.bar_chart(chart_data, use_container_width=True)
     except Exception as e:
-        st.caption(f"Could not render matplotlib visual chart. Details: {e}")
+        st.caption(f"Could not render analytics chart. Details: {e}")
         
     # Table of registered users
     st.write("---")

@@ -396,29 +396,26 @@ def get_user_quiz_results(user_id):
 # --- ANALYTICS AND SYSTEM REPORTING (ADMIN PANEL) ---
 
 def get_admin_metrics():
-    """Retrieve system analytics metrics for admin dashboards."""
+    """Retrieve system-wide aggregated metrics for the admin dashboard in a single fast query."""
     metrics = {}
     conn = get_connection()
     cursor = conn.cursor()
     
-    # 1. Total Registered Users
-    cursor.execute("SELECT COUNT(*) FROM users")
-    metrics["total_users"] = cursor.fetchone()[0]
+    # Combined single query for global stats
+    cursor.execute("""
+        SELECT 
+            (SELECT COUNT(*) FROM users) as total_users,
+            (SELECT COUNT(*) FROM documents) as total_docs,
+            (SELECT COALESCE(SUM(file_size), 0) FROM documents) as total_storage_bytes,
+            (SELECT COUNT(*) FROM messages WHERE sender = 'user') as total_questions
+    """)
+    row = cursor.fetchone()
+    metrics["total_users"] = row["total_users"]
+    metrics["total_docs"] = row["total_docs"]
+    metrics["total_storage_bytes"] = row["total_storage_bytes"]
+    metrics["total_questions"] = row["total_questions"]
     
-    # 2. Total Uploaded Docs
-    cursor.execute("SELECT COUNT(*) FROM documents")
-    metrics["total_docs"] = cursor.fetchone()[0]
-    
-    # 3. Total Storage Used
-    cursor.execute("SELECT SUM(file_size) FROM documents")
-    size = cursor.fetchone()[0]
-    metrics["total_storage_bytes"] = size if size else 0
-    
-    # 4. Total Questions Asked (messages where sender = 'user')
-    cursor.execute("SELECT COUNT(*) FROM messages WHERE sender = 'user'")
-    metrics["total_questions"] = cursor.fetchone()[0]
-    
-    # 5. Active User List (Usernames, Document Counts, Quiz Count, Messages Count)
+    # Fetch user registry list
     cursor.execute("""
         SELECT u.id, u.username, u.email, u.role, u.created_at,
                (SELECT COUNT(*) FROM documents d WHERE d.uploaded_by = u.id) as doc_count,
@@ -432,34 +429,27 @@ def get_admin_metrics():
     return metrics
 
 def get_user_metrics(user_id):
-    """Retrieve key metrics for a specific user's dashboard."""
+    """Retrieve key metrics for a specific user's dashboard in a single fast query."""
     metrics = {}
     conn = get_connection()
     cursor = conn.cursor()
     
-    # 1. Total documents uploaded
-    cursor.execute("SELECT COUNT(*) FROM documents WHERE uploaded_by = ?", (user_id,))
-    metrics["uploaded_docs"] = cursor.fetchone()[0]
-    
-    # 2. Total storage usage
-    cursor.execute("SELECT SUM(file_size) FROM documents WHERE uploaded_by = ?", (user_id,))
-    size = cursor.fetchone()[0]
-    metrics["storage_used_bytes"] = size if size else 0
-    
-    # 3. Total questions asked
+    # Combined single query for user stats
     cursor.execute("""
-        SELECT COUNT(*) 
-        FROM messages m
-        JOIN conversations c ON m.conversation_id = c.id
-        WHERE c.user_id = ? AND m.sender = 'user'
-    """, (user_id,))
-    metrics["questions_asked"] = cursor.fetchone()[0]
+        SELECT 
+            (SELECT COUNT(*) FROM documents WHERE uploaded_by = ?) as uploaded_docs,
+            (SELECT COALESCE(SUM(file_size), 0) FROM documents WHERE uploaded_by = ?) as storage_used_bytes,
+            (SELECT COUNT(*) FROM messages m JOIN conversations c ON m.conversation_id = c.id WHERE c.user_id = ? AND m.sender = 'user') as questions_asked,
+            (SELECT COUNT(*) FROM quiz_results WHERE user_id = ?) as quizzes_taken
+    """, (user_id, user_id, user_id, user_id))
+    row = cursor.fetchone()
     
-    # 4. Quiz count
-    cursor.execute("SELECT COUNT(*) FROM quiz_results WHERE user_id = ?", (user_id,))
-    metrics["quizzes_taken"] = cursor.fetchone()[0]
+    metrics["uploaded_docs"] = row["uploaded_docs"]
+    metrics["storage_used_bytes"] = row["storage_used_bytes"]
+    metrics["questions_asked"] = row["questions_asked"]
+    metrics["quizzes_taken"] = row["quizzes_taken"]
     
-    # 5. Quiz average score
+    # Quiz average score
     cursor.execute("SELECT score, total FROM quiz_results WHERE user_id = ?", (user_id,))
     quizzes = cursor.fetchall()
     if quizzes:
