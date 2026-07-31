@@ -72,7 +72,7 @@ def register_user(username, email, password, confirm_password, role='student', a
         return False, "An error occurred during registration. Please try again."
 
 def login_user(username, password, required_role=None):
-    """Verify login credentials and set Streamlit session state with optional role requirement."""
+    """Verify login credentials and set Streamlit session state."""
     username = username.strip()
     if not username or not password:
         return False, "Username and password are required."
@@ -86,23 +86,18 @@ def login_user(username, password, required_role=None):
         return False, "Invalid username/email or password."
         
     if check_password(password, user["password_hash"]):
-        # Check required role if specified
-        if required_role == 'admin' and user["role"] != 'admin':
-            return False, "Access Denied: This account does not have Administrator privileges. Please use Student Login."
-            
         # Establish session details
         st.session_state.authenticated = True
         st.session_state.user_id = user["id"]
         st.session_state.username = user["username"]
         st.session_state.user_role = user["role"]
         st.session_state.email = user["email"]
-        if "current_page" not in st.session_state or st.session_state.current_page == "Auth":
-            st.session_state.current_page = "Dashboard"
-        
-        db.log_event("INFO", "auth", f"User {user['username']} logged in successfully as {user['role']}.")
-        return True, f"Welcome {user['username']}! ({user['role'].capitalize()})"
-        
-    return False, "Invalid username/email or password."
+        st.session_state.admin_mode = (user["role"] == "admin")
+        st.session_state.current_page = "Admin Dashboard" if user["role"] == "admin" else "Dashboard"
+        db.log_event("INFO", "auth", f"User {user['username']} ({user['role']}) logged in successfully.")
+        return True, f"Welcome back, {user['username']}!"
+    else:
+        return False, "Invalid username/email or password."
 
 
 def logout():

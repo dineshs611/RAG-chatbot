@@ -1276,8 +1276,27 @@ def show_main_interface():
         st.write(f"Logged in as: **{st.session_state.username}** (`{st.session_state.user_role}`)")
         st.write("---")
         
-        # Navigation Options: Dedicated lists for Admin vs Student
+        # Navigation Mode Switcher for Administrators
         if st.session_state.user_role == "admin":
+            if "admin_mode" not in st.session_state:
+                st.session_state.admin_mode = True
+                
+            st.caption("Workspace View Mode:")
+            col_m1, col_m2 = st.columns(2)
+            with col_m1:
+                if st.button("🛡️ Admin", type="primary" if st.session_state.admin_mode else "secondary", use_container_width=True):
+                    st.session_state.admin_mode = True
+                    st.session_state.current_page = "Admin Dashboard"
+                    st.rerun()
+            with col_m2:
+                if st.button("🎓 Student", type="primary" if not st.session_state.admin_mode else "secondary", use_container_width=True):
+                    st.session_state.admin_mode = False
+                    st.session_state.current_page = "Dashboard"
+                    st.rerun()
+            st.divider()
+        
+        # Navigation Options: Dedicated lists based on active mode
+        if st.session_state.user_role == "admin" and st.session_state.get("admin_mode", True):
             pages = [
                 ("Admin Dashboard", "🏠"),
                 ("Student Activity Tracker", "👥"),
