@@ -261,7 +261,8 @@ def show_upload_materials():
         uploaded_file = st.file_uploader(
             "Choose a file", 
             type=["pdf", "docx", "txt", "csv", "xlsx", "xls"],
-            help="Files will be parsed, split, embedded, and indexed locally."
+            help="Files will be parsed, split, embedded, and indexed locally.",
+            key=f"uploader_{st.session_state.user_id}"
         )
         
         if uploaded_file is not None:
