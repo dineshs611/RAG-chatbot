@@ -12,7 +12,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-import importlib
 import utils.db_manager as db
 import utils.auth as auth
 import utils.exporters as exporters
@@ -24,11 +23,6 @@ import rag.summarizer as sum_api
 import rag.quiz_generator as quiz_api
 import rag.flashcard_generator as fc_api
 from config.settings import LANGUAGES, SUGGESTED_QUESTIONS
-
-# Ensure modules reload fresh on Streamlit script execution
-importlib.reload(db)
-importlib.reload(auth)
-importlib.reload(emailer)
 
 # Initialize session state variables
 auth.init_session()
