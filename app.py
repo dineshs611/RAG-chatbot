@@ -26,7 +26,13 @@ from config.settings import LANGUAGES, SUGGESTED_QUESTIONS
 
 # Initialize session state variables
 auth.init_session()
-db.init_db()
+
+@st.cache_resource
+def setup_database_schema():
+    db.init_db()
+    return True
+
+setup_database_schema()
 
 # Read and inject CSS
 try:

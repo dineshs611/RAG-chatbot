@@ -8,9 +8,16 @@ from config.settings import DB_PATH
 logger = logging.getLogger("EduRAG.DB")
 
 def get_connection():
-    """Create a connection to the SQLite database."""
-    conn = sqlite3.connect(DB_PATH)
+    """Create a thread-safe connection to the SQLite database with busy timeout."""
+    conn = sqlite3.connect(DB_PATH, timeout=30.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    # Enable WAL mode and 30-second busy timeout for multi-device concurrency
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=30000;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+    except Exception:
+        pass
     return conn
 
 def init_db():

@@ -4,8 +4,8 @@ import streamlit as st
 import utils.db_manager as db
 
 def hash_password(password: str) -> str:
-    """Hash a password using bcrypt."""
-    salt = bcrypt.gensalt()
+    """Hash a password using bcrypt with optimized rounds for concurrent traffic."""
+    salt = bcrypt.gensalt(rounds=10)
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def check_password(password: str, hashed: str) -> bool:
