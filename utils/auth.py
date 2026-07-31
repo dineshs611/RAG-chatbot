@@ -144,15 +144,20 @@ def init_session():
 
     # Auto-detect default active LLM provider from environment keys
     if "llm_provider" not in st.session_state:
-        if os.getenv("GEMINI_API_KEY", "").strip():
+        gemini_key = (os.getenv("GEMINI_API_KEY") or "").strip()
+        openai_key = (os.getenv("OPENAI_API_KEY") or "").strip()
+        default_llm = (os.getenv("DEFAULT_LLM_PROVIDER") or "demo").strip().lower()
+        default_emb = (os.getenv("DEFAULT_EMBEDDINGS_PROVIDER") or "local").strip().lower()
+
+        if gemini_key:
             st.session_state.llm_provider = "gemini"
             st.session_state.embeddings_provider = "gemini"
-        elif os.getenv("OPENAI_API_KEY", "").strip():
+        elif openai_key:
             st.session_state.llm_provider = "openai"
             st.session_state.embeddings_provider = "openai"
-        elif os.getenv("DEFAULT_LLM_PROVIDER", "").strip().lower() != "demo":
-            st.session_state.llm_provider = os.getenv("DEFAULT_LLM_PROVIDER").strip().lower()
-            st.session_state.embeddings_provider = os.getenv("DEFAULT_EMBEDDINGS_PROVIDER", "local").strip().lower()
+        elif default_llm and default_llm != "demo":
+            st.session_state.llm_provider = default_llm
+            st.session_state.embeddings_provider = default_emb
         else:
             st.session_state.llm_provider = "demo"
             st.session_state.embeddings_provider = "local"
